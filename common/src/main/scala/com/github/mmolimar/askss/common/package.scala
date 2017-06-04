@@ -1,11 +1,11 @@
-package com.github.mmolimar.asks.common
+package com.github.mmolimar.askss.common
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 
 package object implicits {
 
-  import com.github.mmolimar.asks.common._
+  import com.github.mmolimar.askss.common._
   import com.typesafe.config.{Config, ConfigFactory, ConfigResolveOptions}
 
   lazy implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global

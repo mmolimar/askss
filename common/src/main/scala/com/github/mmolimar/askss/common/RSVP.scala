@@ -1,4 +1,4 @@
-package com.github.mmolimar.asks.common
+package com.github.mmolimar.askss.common
 
 case class RSVP(rsvp_id: Long,
                 visibility: String,
