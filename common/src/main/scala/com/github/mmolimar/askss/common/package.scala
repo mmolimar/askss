@@ -5,7 +5,6 @@ import akka.stream.ActorMaterializer
 
 package object implicits {
 
-  import com.github.mmolimar.askss.common._
   import com.typesafe.config.{Config, ConfigFactory, ConfigResolveOptions}
 
   lazy implicit val executionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -25,41 +24,43 @@ package object implicits {
 
 }
 
-import com.github.mmolimar.asks.common._
-  import spray.json._
+import spray.json._
 
-  private[implicits] class PimpedRSVP(rsvp: RSVP) {
-    implicit val jsonWriter = RsvpJsonProtocol.kafkaRecordWriter
+protected class PimpedRSVP(rsvp: RSVP) {
 
-    def fromEvent: String = {
-      rsvp.toJson.compactPrint
-    }
+  implicit val jsonWriter = RsvpJsonProtocol.kafkaRecordWriter
+
+  def fromEvent: String = {
+    rsvp.toJson.compactPrint
+  }
+}
+
+protected class PimpedString(json: String) {
+
+  implicit val jsonFormat = RsvpJsonProtocol.rsvpFormat
+
+  def toEvent: RSVP = {
+    JsonParser(json).convertTo[RSVP]
+  }
+}
+
+protected object RsvpJsonProtocol extends DefaultJsonProtocol {
+
+  implicit val groupTopicFormat = jsonFormat2(GroupTopic)
+  implicit val groupFormat = jsonFormat9(Group)
+  implicit val eventFormat = jsonFormat3(Event)
+  implicit val venueFormat = jsonFormat4(Venue)
+  implicit val memberFormat = jsonFormat2(Member)
+  implicit val rsvpFormat = jsonFormat8(RSVP)
+  implicit val kafkaRecordWriter = KafkaRecordJsonFormat
+
+  protected object KafkaRecordJsonFormat extends RootJsonWriter[RSVP] {
+
+    def write(rsvp: RSVP) = JsObject(
+      "records" -> JsArray(Vector(JsObject(
+        "key" -> JsNumber(rsvp.rsvp_id),
+        "value" -> rsvp.toJson(rsvpFormat).asJsObject)))
+    )
   }
 
-  private[implicits] class PimpedString(json: String) {
-    implicit val jsonFormat = RsvpJsonProtocol.rsvpFormat
-
-    def toEvent: RSVP = {
-      JsonParser(json).convertTo[RSVP]
-    }
-  }
-
-  private[implicits] object RsvpJsonProtocol extends DefaultJsonProtocol {
-
-    implicit val groupTopicFormat = jsonFormat2(GroupTopic)
-    implicit val groupFormat = jsonFormat9(Group)
-    implicit val eventFormat = jsonFormat3(Event)
-    implicit val venueFormat = jsonFormat4(Venue)
-    implicit val memberFormat = jsonFormat2(Member)
-    implicit val rsvpFormat = jsonFormat8(RSVP)
-    implicit val kafkaRecordWriter = KafkaRecordJsonFormat
-
-    protected object KafkaRecordJsonFormat extends RootJsonWriter[RSVP] {
-
-      def write(rsvp: RSVP) = JsObject(
-        "records" -> JsArray(Vector(JsObject(
-          "key" -> JsNumber(rsvp.rsvp_id),
-          "value" -> rsvp.toJson(rsvpFormat).asJsObject)))
-      )
-    }
-  }
+}
